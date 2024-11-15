@@ -4,7 +4,14 @@
       <v-card-title>
         <span class="headline">Confirm Delete</span>
       </v-card-title>
-      <v-card-text> Are you sure you want to delete this todo? </v-card-text>
+      <v-card-text>
+        Are you sure you want to delete this todo?
+        
+        <!-- Error Message Display -->
+        <v-alert v-if="errorMessage" type="error" dismissible>
+          {{ errorMessage }}
+        </v-alert>
+      </v-card-text>
       <v-card-actions>
         <v-btn @click="handleCancel" :disabled="loading">Cancel</v-btn>
         <v-btn
@@ -19,7 +26,6 @@
     </v-card>
   </v-dialog>
 </template>
-
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { deleteTodo } from '@/queries/todo'
@@ -40,7 +46,8 @@ const props = defineProps({
 })
 
 const todoId = props.todoToDelete
-const loading = ref(false) 
+const loading = ref(false)
+const errorMessage = ref<string | null>(null) 
 
 const handleDelete = async () => {
   if (!todoId) {
@@ -49,14 +56,15 @@ const handleDelete = async () => {
 
   try {
     loading.value = true
-    
-    await deleteTodo(todoId) 
-    
+    errorMessage.value = null 
+
+    await deleteTodo(todoId)
+
     props.refetch()
-    handleCancel() 
+    handleCancel()
 
   } catch (error) {
-    console.error('Error deleting todo:', error)
+    errorMessage.value = 'There was an error deleting the todo. Please try again.'
   } finally {
     loading.value = false
   }
@@ -75,6 +83,7 @@ function handleCancel() {
   emit('update:show', false)
 }
 </script>
+
 
 
 <style></style>

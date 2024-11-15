@@ -13,7 +13,7 @@
           :display-errors="false"
         >
           <TextElement name="name" label="Name" placeholder="Name" :rules="['required']" />
-
+          
           <!-- Date Picker Component -->
           <DateElement
             name="date"
@@ -22,6 +22,11 @@
             :rules="['required']"
             display-format="MMMM Do, YYYY"
           />
+
+          <!-- Error Message Display -->
+          <v-alert v-if="errorMessage" type="error" dismissible>
+            {{ errorMessage }}
+          </v-alert>
 
           <GroupElement name="actions">
             <ButtonElement
@@ -57,13 +62,13 @@
     </v-card>
   </v-dialog>
 </template>
-
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { addTodo } from '@/queries/todo';
+import { addTodo } from '@/queries/todo'
 
 const form$ = ref(null)
 const loading = ref(false)
+const errorMessage = ref<string | null>(null) // Add error state
 
 const props = defineProps({
   show: {
@@ -72,32 +77,32 @@ const props = defineProps({
   },
   refetch: {
     type: Function,
-    require: true,
+    required: true,
   },
 })
 
 const handleAddTodo = async () => {
   if (!form$.value) {
-    console.error('Form is not available');
-    return;
+    return
   }
 
-  const data = form$.value.data;
+  const data = form$.value.data
 
   try {
-    loading.value = true;
-    
-    await addTodo(data);
-    
-    props.refetch();
-    handleCancel();
+    loading.value = true
+    errorMessage.value = null 
+
+    await addTodo(data)
+
+    props.refetch()
+    handleCancel()
 
   } catch (error) {
-    console.error('Error adding todo:', error);
+    errorMessage.value = 'There was an error adding the todo. Please try again.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const emit = defineEmits(['update:show'])
 
@@ -112,6 +117,7 @@ function handleCancel() {
   emit('update:show', false)
 }
 </script>
+
 
 
 <style scoped>

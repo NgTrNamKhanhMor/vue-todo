@@ -28,6 +28,10 @@
             :rules="['required']"
             display-format="MMMM Do, YYYY"
           />
+          <!-- Error Message Display -->
+          <v-alert v-if="errorMessage" type="error" dismissible>
+            {{ errorMessage }}
+          </v-alert>
           <GroupElement name="actions">
             <ButtonElement
               align="right"
@@ -61,13 +65,13 @@
     </v-card>
   </v-dialog>
 </template>
-
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { updateTodo } from '@/queries/todo'
 
 const form$ = ref(null)
 const loading = ref(false) 
+const errorMessage = ref<string | null>(null) // Error state
 
 const props = defineProps({
   refetch: {
@@ -106,6 +110,7 @@ const handleEditTodo = async () => {
   const data = form$.value.data
   try {
     loading.value = true
+    errorMessage.value = null // Clear previous errors
     
     await updateTodo(props.selectedTodo.id, data)
     
@@ -113,7 +118,7 @@ const handleEditTodo = async () => {
     handleCancel()
 
   } catch (error) {
-    console.error('Error editing todo:', error)
+    errorMessage.value = 'There was an error editing the todo. Please try again.'
   } finally {
     loading.value = false
   }
@@ -132,5 +137,6 @@ function handleCancel() {
   emit('update:show', false)
 }
 </script>
+
 
 <style scoped></style>

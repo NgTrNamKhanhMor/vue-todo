@@ -146,7 +146,6 @@ const refetch = async () => {
   try {
     data.value = await getTodo(queryParams.value)
   } catch (error) {
-    console.error('Error fetching todos:', error)
     isError.value = true
   } finally {
     isLoading.value = false
@@ -168,7 +167,7 @@ const toggleComplete = async (todo: Todo) => {
   try {
     await updateTodo(todo.id, { completed: !todo.completed })
   } catch (error) {
-    console.error('Error updating todo:', error)
+    isError.value = true
   }
 }
 
