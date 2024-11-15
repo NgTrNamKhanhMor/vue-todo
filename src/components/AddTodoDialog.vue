@@ -66,10 +66,6 @@
 import { ref, watch } from 'vue'
 import { addTodo } from '@/queries/todo'
 
-const form$ = ref(null)
-const loading = ref(false)
-const errorMessage = ref<string | null>(null) // Add error state
-
 const props = defineProps({
   show: {
     type: Boolean,
@@ -80,6 +76,11 @@ const props = defineProps({
     required: true,
   },
 })
+const form$ = ref(null)
+const loading = ref(false)
+const errorMessage = ref<string | null>(null) 
+
+const emit = defineEmits(['update:show'])
 
 const handleAddTodo = async () => {
   if (!form$.value) {
@@ -103,8 +104,9 @@ const handleAddTodo = async () => {
     loading.value = false
   }
 }
-
-const emit = defineEmits(['update:show'])
+function handleCancel() {
+  emit('update:show', false)
+}
 
 watch(
   () => props.show,
@@ -113,9 +115,7 @@ watch(
   },
 )
 
-function handleCancel() {
-  emit('update:show', false)
-}
+
 </script>
 
 

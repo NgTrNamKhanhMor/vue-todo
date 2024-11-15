@@ -49,6 +49,9 @@ const todoId = props.todoToDelete
 const loading = ref(false)
 const errorMessage = ref<string | null>(null) 
 
+
+const emit = defineEmits(['update:show'])
+
 const handleDelete = async () => {
   if (!todoId) {
     return
@@ -70,7 +73,9 @@ const handleDelete = async () => {
   }
 }
 
-const emit = defineEmits(['update:show'])
+function handleCancel() {
+  emit('update:show', false)
+}
 
 watch(
   () => props.show,
@@ -79,9 +84,7 @@ watch(
   },
 )
 
-function handleCancel() {
-  emit('update:show', false)
-}
+
 </script>
 
 

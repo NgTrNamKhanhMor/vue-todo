@@ -110,23 +110,24 @@ import EditTodoDialog from '@/components/EditTodoForm.vue'
 import { getTodo, updateTodo, type FilteredTodosResponse, type Todo } from '@/queries/todo'
 import { useAuthStore } from '@/stores/auth'
 import VueDatePicker from '@vuepic/vue-datepicker'
+import { DEFAULT_CURRENT_PAGE, DEFAULT_PER_PAGE } from '@/const'
 import '@vuepic/vue-datepicker/dist/main.css'
-
-const selectedTodo = ref<Todo | null>(null)
 
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
-
+const selectedTodo = ref<Todo | null>(null)
 const addDialog = ref(false)
 const editDialog = ref(false)
 const confirmDeleteDialog = ref(false)
 const todoToDelete = ref<number | undefined>(undefined)
-
-const currentPage = ref(1)
+const currentPage = ref(DEFAULT_CURRENT_PAGE)
+const itemsPerPage = DEFAULT_PER_PAGE
 const searchTerm = ref('')
 const selectedDate = ref<string | null>(null)
-const itemsPerPage = 5
+const data = ref<FilteredTodosResponse | null>(null)
+const isLoading = ref(false)
+const isError = ref(false)
 
 const queryParams = computed(() => ({
   userId: Number(authStore.user?.id),
@@ -135,10 +136,9 @@ const queryParams = computed(() => ({
   page: currentPage.value,
   itemsPerPage,
 }))
+const totalPages = computed(() => data.value?.totalPages || 1)
+const filteredTodos = computed(() => data.value?.todos || [])
 
-const data = ref<FilteredTodosResponse | null>(null)
-const isLoading = ref(false)
-const isError = ref(false)
 
 const refetch = async () => {
   isLoading.value = true
@@ -151,17 +151,6 @@ const refetch = async () => {
     isLoading.value = false
   }
 }
-
-watch(
-  queryParams,
-  () => {
-    refetch()
-  },
-  { immediate: true },
-)
-
-const totalPages = computed(() => data.value?.totalPages || 1)
-const filteredTodos = computed(() => data.value?.todos || [])
 
 const toggleComplete = async (todo: Todo) => {
   try {
@@ -181,6 +170,28 @@ const updateUrlParams = () => {
     },
   })
 }
+
+const openAddDialog = () => {
+  addDialog.value = true
+}
+
+const openEditDialog = (todo: Todo) => {
+  selectedTodo.value = todo
+  editDialog.value = true
+}
+
+const confirmDelete = (todoId: number) => {
+  todoToDelete.value = todoId
+  confirmDeleteDialog.value = true
+}
+
+watch(
+  queryParams,
+  () => {
+    refetch()
+  },
+  { immediate: true },
+)
 
 watch(
   () => route.query,
@@ -203,19 +214,7 @@ watch([currentPage, totalPages], () => {
   updateUrlParams()
   refetch()
 })
-const openAddDialog = () => {
-  addDialog.value = true
-}
 
-const openEditDialog = (todo: Todo) => {
-  selectedTodo.value = todo
-  editDialog.value = true
-}
-
-const confirmDelete = (todoId: number) => {
-  todoToDelete.value = todoId
-  confirmDeleteDialog.value = true
-}
 </script>
 
 <style scoped></style>

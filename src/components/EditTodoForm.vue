@@ -69,10 +69,6 @@
 import { ref, watch } from 'vue'
 import { updateTodo } from '@/queries/todo'
 
-const form$ = ref(null)
-const loading = ref(false) 
-const errorMessage = ref<string | null>(null) // Error state
-
 const props = defineProps({
   refetch: {
     type: Function,
@@ -87,6 +83,10 @@ const props = defineProps({
     required: true,
   },
 })
+const form$ = ref(null)
+const loading = ref(false) 
+const errorMessage = ref<string | null>(null) 
+
 
 const initialValue = ref({
   name: props.selectedTodo.name || '',
@@ -95,22 +95,15 @@ const initialValue = ref({
     : '',
 })
 
-watch(
-  () => props.selectedTodo,
-  (newTodo) => {
-    initialValue.value = {
-      name: newTodo.name || '',
-      date: newTodo.date ? new Date(newTodo.date).toISOString().split('T')[0] : '',
-    }
-  },
-  { immediate: true },
-)
+const emit = defineEmits(['update:show'])
+
+
 
 const handleEditTodo = async () => {
   const data = form$.value.data
   try {
     loading.value = true
-    errorMessage.value = null // Clear previous errors
+    errorMessage.value = null 
     
     await updateTodo(props.selectedTodo.id, data)
     
@@ -124,7 +117,20 @@ const handleEditTodo = async () => {
   }
 }
 
-const emit = defineEmits(['update:show'])
+function handleCancel() {
+  emit('update:show', false)
+}
+
+watch(
+  () => props.selectedTodo,
+  (newTodo) => {
+    initialValue.value = {
+      name: newTodo.name || '',
+      date: newTodo.date ? new Date(newTodo.date).toISOString().split('T')[0] : '',
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   () => props.show,
@@ -133,9 +139,7 @@ watch(
   },
 )
 
-function handleCancel() {
-  emit('update:show', false)
-}
+
 </script>
 
 
