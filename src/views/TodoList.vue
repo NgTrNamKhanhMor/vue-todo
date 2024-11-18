@@ -1,18 +1,54 @@
 <template>
   <v-container :fluid="true">
-    <!-- Search and Date Picker -->
+    <!-- Search, Date Picker, and Add Todo Button -->
     <v-row dense align="center">
-      <v-col cols="3">
+      <!-- <v-col cols="3">
         <v-text-field v-model="searchTerm" label="Search Todos" />
       </v-col>
       <v-col cols="3">
-        <VueDatePicker v-model="selectedDate" :enable-time-picker="false" position="left"/>
+        <VueDatePicker v-model="selectedDate" :enable-time-picker="false" position="left" />
+      </v-col> -->
+      <v-col cols="1">
+        <v-btn
+          color="primary"
+          class="my-4"
+          @click="openAddDialog"
+          prepend-icon="mdi-plus"
+        >
+          Add Todo
+        </v-btn>
+      </v-col>
+      <v-col cols="1">
+        <v-btn
+          color="secondary"
+          class="my-4"
+          @click="openFilterDialog"
+          prepend-icon="mdi-filter"
+        >
+          Filter
+        </v-btn>
       </v-col>
     </v-row>
-    <v-btn color="primary" @click="openAddDialog">Add Todo</v-btn>
+
+    <!-- Filter Tabs -->
+    <v-tabs class="mt-4">
+      <v-tab @click="filterTodos('all')">All</v-tab>
+      <v-divider vertical class="mx-2"></v-divider>
+      <v-tab @click="filterTodos('done')">
+        Done
+        <v-chip class="ml-2" color="success" small>{{ doneCount }}</v-chip>
+      </v-tab>
+      <v-tab @click="filterTodos('notDone')">
+        Not Done
+        <v-chip class="ml-2" color="error" small>{{ notDoneCount }}</v-chip>
+      </v-tab>
+    </v-tabs>
+
+    <!-- Divider -->
+    <v-divider class="my-4"></v-divider>
 
     <!-- Loading and Error Handling -->
-    <v-container fluid v-if="isLoading" >
+    <v-container fluid v-if="isLoading">
       <v-skeleton-loader
         type="table-heading"
         :loading="isLoading"
@@ -24,11 +60,10 @@
       An error occurred while fetching todos.
     </v-alert>
 
-    <!-- Todo List: Show only if not loading -->
+    <!-- Todo List -->
     <v-list v-else-if="!isLoading && filteredTodos.length > 0">
       <v-list-item v-for="todo in filteredTodos" :key="todo.id" class="todo-item">
         <v-row align="center">
-          <!-- Checkbox on the left -->
           <v-col cols="auto">
             <v-checkbox
               @click="toggleComplete(todo)"
@@ -37,8 +72,6 @@
               hide-details
             ></v-checkbox>
           </v-col>
-
-          <!-- Title and Subtitle in another column -->
           <v-col class="cursor-pointer" @click="() => openEditDialog(todo)">
             <v-list-item-title>
               {{ todo.name }}
@@ -54,8 +87,6 @@
               }}
             </v-list-item-subtitle>
           </v-col>
-
-          <!-- Delete Icon -->
           <v-col cols="auto">
             <v-icon icon="mdi-delete" color="red" @click="confirmDelete(todo.id)"></v-icon>
           </v-col>
@@ -97,6 +128,11 @@
       :refetch="refetch"
       :todoToDelete="todoToDelete"
     />
+    <FilterDialog
+      v-if="filterDialog"
+      :show="filterDialog"
+      @update:show="filterDialog = $event"
+    />
   </v-container>
 </template>
 
@@ -106,9 +142,9 @@ import { useRoute, useRouter } from 'vue-router'
 import AddTodoDialog from '@/components/AddTodoDialog.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
 import EditTodoDialog from '@/components/EditTodoForm.vue'
+import FilterDialog from '@/components/FilterDialog.vue'
 import { getTodo, updateTodo, type FilteredTodosResponse, type Todo } from '@/queries/todo'
 import { useAuthStore } from '@/stores/auth'
-import VueDatePicker from '@vuepic/vue-datepicker'
 import { DEFAULT_CURRENT_PAGE, DEFAULT_PER_PAGE } from '@/const'
 import '@vuepic/vue-datepicker/dist/main.css'
 
@@ -127,6 +163,7 @@ const selectedDate = ref<string | null>(null)
 const data = ref<FilteredTodosResponse | null>(null)
 const isLoading = ref(false)
 const isError = ref(false)
+const filterDialog = ref(false)
 
 const queryParams = computed(() => ({
   userId: Number(authStore.user?.id),
@@ -149,6 +186,10 @@ const refetch = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+const openFilterDialog = () => {
+  filterDialog.value = true
 }
 
 const toggleComplete = async (todo: Todo) => {
@@ -184,6 +225,11 @@ const confirmDelete = (todoId: number) => {
   confirmDeleteDialog.value = true
 }
 
+const updateFilter = () => {
+  updateUrlParams()
+  refetch()
+}
+
 watch(
   queryParams,
   () => {
@@ -202,16 +248,16 @@ watch(
   { immediate: true },
 )
 
+
+
 watch([currentPage, searchTerm, selectedDate], () => {
-  updateUrlParams()
-  refetch()
+  updateFilter()
 })
 watch([currentPage, totalPages], () => {
   if (currentPage.value > totalPages.value) {
     currentPage.value = totalPages.value
   }
-  updateUrlParams()
-  refetch()
+  updateFilter()
 })
 
 </script>
