@@ -13,7 +13,7 @@
           :display-errors="false"
         >
           <TextElement name="name" label="Name" placeholder="Name" :rules="['required']" />
-          
+
           <!-- Date Picker Component -->
           <DateElement
             name="date"
@@ -78,7 +78,7 @@ const props = defineProps({
 })
 const form$ = ref(null)
 const loading = ref(false)
-const errorMessage = ref<string | null>(null) 
+const errorMessage = ref<string | null>(null)
 
 const emit = defineEmits(['update:show'])
 
@@ -86,18 +86,13 @@ const handleAddTodo = async () => {
   if (!form$.value) {
     return
   }
-
   const data = form$.value.data
-
   try {
     loading.value = true
-    errorMessage.value = null 
-
+    errorMessage.value = null
     await addTodo(data)
-
     props.refetch()
     handleCancel()
-
   } catch (error) {
     errorMessage.value = 'There was an error adding the todo. Please try again.'
   } finally {
@@ -114,11 +109,7 @@ watch(
     emit('update:show', newVal)
   },
 )
-
-
 </script>
-
-
 
 <style scoped>
 .dialog-card {

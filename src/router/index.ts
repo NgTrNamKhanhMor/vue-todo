@@ -2,16 +2,19 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import Login from '@/views/Login.vue'
 import TodoList from '@/views/TodoList.vue'
+import { HOME_PATH, LOGIN_PATH } from '@/const/path'
+
+
 
 const routes = [
-  { path: '/login', component: Login },
+  { path: LOGIN_PATH, component: Login },
   {
-    path: '/',
+    path: HOME_PATH,
     component: TodoList,
     beforeEnter: (to, from, next) => {
       const authStore = useAuthStore()
       if (!authStore.isAuthenticated) {
-        next('/login')
+        next(LOGIN_PATH)
       } else {
         next()
       }

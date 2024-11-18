@@ -16,8 +16,7 @@
       <v-skeleton-loader
         type="table-heading"
         :loading="isLoading"
-        v-for="i in 5"
-        class="py-3"
+        v-for="i in DEFAULT_PER_PAGE"
         :key="i"
       />
     </v-container>
@@ -27,7 +26,7 @@
 
     <!-- Todo List: Show only if not loading -->
     <v-list v-else-if="!isLoading && filteredTodos.length > 0">
-      <v-list-item v-for="todo in filteredTodos" :key="todo.id">
+      <v-list-item v-for="todo in filteredTodos" :key="todo.id" class="todo-item">
         <v-row align="center">
           <!-- Checkbox on the left -->
           <v-col cols="auto">
@@ -217,4 +216,11 @@ watch([currentPage, totalPages], () => {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+  .todo-item {
+    border: 1px solid #ccc;
+    border-radius: 20px !important;     
+    margin-bottom: 8px;     
+    padding: 8px;            
+  }
+</style>

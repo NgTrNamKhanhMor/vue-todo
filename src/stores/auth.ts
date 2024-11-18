@@ -20,7 +20,7 @@ export const useAuthStore = defineStore('auth', {
         const users = response.data
 
         // Find a user that matches the given email and password
-        const user = users.find((u) => u.email === email && u.password === password)
+        const user = users.find((user) => user.email === email && user.password === password)
 
         if (user) {
           this.user = user
