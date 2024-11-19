@@ -34,11 +34,14 @@
                 @click="clearDate"
               name="resetDate"
               :disabled="loading"
+              class="d-flex justify-center items-center"
               :columns="{
-                container: 1,
+                container: 2,
                 
               }"
-              > <v-icon>mdi-close</v-icon></ButtonElement
+              > 
+                <v-icon >mdi-close</v-icon>
+              </ButtonElement
             >
           </GroupElement>
           <!-- Error Message Display -->
@@ -49,6 +52,7 @@
           <GroupElement name="actions">
             <ButtonElement
               align="right"
+              :resets="true"
               secondary
               name="close"
               @click="handleCancel"
@@ -111,6 +115,7 @@ const handleFilter = async () => {
         ...route.query,
         search: data.name,
         date: data.date,
+        completed: null,
         page: 1,
       },
     })
