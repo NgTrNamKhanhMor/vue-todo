@@ -13,10 +13,12 @@ import {
   VCardText,
   VCardTitle,
   VCheckbox,
+  VChip,
   VCol,
   VContainer,
   VDatePicker,
   VDialog,
+  VDivider,
   VForm,
   VIcon,
   VList,
@@ -26,9 +28,12 @@ import {
   VMain,
   VPagination,
   VProgressCircular,
+  VProgressLinear,
   VRow,
   VSkeletonLoader,
   VSpacer,
+  VTab,
+  VTabs,
   VTextField,
   VToolbarTitle,
 } from 'vuetify/components'
@@ -42,6 +47,11 @@ import '@mdi/font/css/materialdesignicons.css'
 
 const vuetify = createVuetify({
   components: {
+    VChip,
+    VDivider,
+    VTabs,
+    VTab,
+    VProgressLinear,
     VSkeletonLoader,
     VIcon,
     VRow,
@@ -76,9 +86,9 @@ const vuetify = createVuetify({
     themes: {
       light: {
         colors: {
-          primary: '#1976D2', // Define primary color
+          primary: '#42c7ef', // Define primary color
           secondary: '#424242', // Define secondary color
-          accent: '#82B1FF',
+          accent: '#ade3f4',
           error: '#FF5252',
           info: '#2196F3',
           success: '#4CAF50',
