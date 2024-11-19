@@ -5,116 +5,85 @@
         <span class="headline">Filter Todo</span>
       </v-card-title>
       <v-card-text>
-        <Vueform
-          :endpoint="false"
-          @submit="handleFilter"
-          validate-on=""
-          ref="form$"
-          :display-errors="false"
-        >
-          <TextElement name="name" label="Name" placeholder="Name" :default="searchTerm" />
+        <v-form ref="form$" v-model="formValid" @submit.prevent="handleFilter">
+          <!-- Name Input Field -->
+          <v-text-field v-model="searchTerm" label="Name" placeholder="Name" />
 
           <!-- Date Picker Component -->
-          <!-- Date Picker with v-model binding (if supported) -->
-          <GroupElement name="dateGroup">
-            <DateElement
-              name="date"
-              placeholder="Date"
-              field-name="Date"
-              :default="selectedDate"
-              display-format="MMMM Do, YYYY"
-              :columns="{
-                container: 10,
-                }"
-            />
+          <v-date-picker
+            v-model="selectedDate"
+            label="Date"
+            placeholder="Date"
+            display-format="MMMM Do, YYYY"
+          />
 
-            <!-- Clear Icon Button -->
-            <ButtonElement
-              secondary
-                @click="clearDate"
-              name="resetDate"
-              :disabled="loading"
-              class="d-flex justify-center items-center"
-              :columns="{
-                container: 2,
-                
-              }"
-              > 
-                <v-icon >mdi-close</v-icon>
-              </ButtonElement
-            >
-          </GroupElement>
+          <!-- Clear Icon Button -->
+          <v-btn icon @click="clearDate" :disabled="loading">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+
           <!-- Error Message Display -->
           <v-alert v-if="errorMessage" type="error" dismissible>
             {{ errorMessage }}
           </v-alert>
 
-          <GroupElement name="actions">
-            <ButtonElement
-              align="right"
-              :resets="true"
-              secondary
-              name="close"
-              @click="handleCancel"
-              :disabled="loading"
-              :columns="{
-                default: 12,
-                sm: 8,
-              }"
-              >Cancel</ButtonElement
-            >
-            <ButtonElement
-              align="right"
-              name="submit"
-              full
-              :submits="true"
-              button-label="Submit"
-              size="lg"
-              :columns="{
-                default: 12,
-                sm: 4,
-              }"
-              :loading="loading"
-              :disabled="loading"
-            />
-          </GroupElement>
-        </Vueform>
+          <!-- Actions Buttons -->
+          <v-row>
+            <v-col cols="12" sm="8">
+              <v-btn @click="handleCancel" :loading="loading" :disabled="loading" full
+                >Cancel</v-btn
+              >
+            </v-col>
+            <v-col cols="12" sm="4">
+              <v-btn type="submit" :loading="loading" :disabled="loading" full>Submit</v-btn>
+            </v-col>
+          </v-row>
+        </v-form>
       </v-card-text>
     </v-card>
   </v-dialog>
 </template>
+
 <script setup lang="ts">
+import { format, parse } from 'date-fns'
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+
 const router = useRouter()
 const route = useRoute()
+
 const props = defineProps({
   show: {
     type: Boolean,
     required: true,
   },
 })
+
 const form$ = ref(null)
+const formValid = ref(false)
 const loading = ref(false)
 const errorMessage = ref<string | null>(null)
 const searchTerm = ref('')
-const selectedDate = ref<string | undefined>(undefined)
+const selectedDate = ref<Date | null>(null)
 
 const emit = defineEmits(['update:show'])
 
 const handleFilter = async () => {
-  if (!form$.value) {
+  if (!formValid.value) {
     return
   }
-  const data = form$.value.data
+
+  const data = { name: searchTerm.value, date: selectedDate.value }
+
   try {
     loading.value = true
     errorMessage.value = null
+    const formattedDate = selectedDate.value ? format(selectedDate.value, 'MMM dd, yyyy') : ''
     router.push({
       query: {
         ...route.query,
         search: data.name,
-        date: data.date,
+        date: formattedDate,
         completed: null,
         page: 1,
       },
@@ -126,13 +95,13 @@ const handleFilter = async () => {
     loading.value = false
   }
 }
+
 function handleCancel() {
   emit('update:show', false)
 }
+
 const clearDate = () => {
-  form$.value.update({
-    date: null,
-  })
+  selectedDate.value = null
 }
 
 watch(
@@ -146,7 +115,9 @@ watch(
   () => route.query,
   () => {
     searchTerm.value = (route.query.search as string) || ''
-    selectedDate.value = (route.query.date as string) || ''
+    selectedDate.value = route.query.date
+      ? parse(route.query.date as string, 'MMM dd, yyyy', new Date()) // Convert string to Date
+      : null
   },
   { immediate: true },
 )

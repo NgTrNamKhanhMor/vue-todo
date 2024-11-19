@@ -73,7 +73,7 @@ export async function getTodo(queryParams: FilterParams): Promise<FilteredTodosR
 }
 
 // Add Todo
-export async function addTodo(newTodo: Todo): Promise<Todo> {
+export async function addTodo(newTodo: Omit<Todo, 'id' | 'userId' | 'completed'>): Promise<Todo> {
   const authStore = useAuthStore()
   const response = await axios.post<Todo>(`https://66d963034ad2f6b8ed546b61.mockapi.io/api/todo`, {
     ...newTodo,

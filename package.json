@@ -17,6 +17,7 @@
     "@vueform/vueform": "^1.11.0",
     "@vuepic/vue-datepicker": "^10.0.0",
     "axios": "^1.7.7",
+    "date-fns": "^4.1.0",
     "pinia": "^2.2.6",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5",
