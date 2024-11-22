@@ -9,35 +9,37 @@
           <!-- Name Input Field -->
           <v-text-field v-model="searchTerm" label="Name" placeholder="Name" />
 
-          <!-- Date Picker Component -->
-          <v-date-picker
-            v-model="selectedDate"
-            label="Date"
-            placeholder="Date"
-            display-format="MMMM Do, YYYY"
-          />
-
-          <!-- Clear Icon Button -->
-          <v-btn icon @click="clearDate" :disabled="loading">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
+          <!-- Date Picker and Clear Icon Button on Same Line -->
+          <v-row align="start" class="mb-4">
+            <v-col cols="8">
+              <v-date-picker
+                v-model="selectedDate"
+                label="Date"
+                placeholder="Date"
+                width="450"
+                display-format="MMMM Do, YYYY"
+                no-title
+              />
+            </v-col>
+            <v-col cols="4" class="d-flex justify-end">
+              <v-btn icon @click="clearDate" :disabled="loading">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </v-col>
+          </v-row>
 
           <!-- Error Message Display -->
           <v-alert v-if="errorMessage" type="error" dismissible>
             {{ errorMessage }}
           </v-alert>
 
-          <!-- Actions Buttons -->
-          <v-row>
-            <v-col cols="12" sm="8">
-              <v-btn @click="handleCancel" :loading="loading" :disabled="loading" full
-                >Cancel</v-btn
-              >
-            </v-col>
-            <v-col cols="12" sm="4">
-              <v-btn type="submit" :loading="loading" :disabled="loading" full>Submit</v-btn>
-            </v-col>
-          </v-row>
+          <!-- Actions Buttons aligned to the right -->
+            <div class="actions">
+              <v-row class="d-flex justify-end ">
+                <v-btn @click="handleCancel" :loading="loading" :disabled="loading"  class="mr-2">Cancel</v-btn>
+                <v-btn  color="primary" type="submit" :loading="loading" :disabled="loading" >Submit</v-btn>
+              </v-row>
+            </div>
         </v-form>
       </v-card-text>
     </v-card>

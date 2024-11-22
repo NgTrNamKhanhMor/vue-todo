@@ -35,12 +35,14 @@
 
           <!-- Action Buttons -->
           <div class="actions">
-            <v-btn color="secondary" variant="outlined" @click="handleCancel" class="mr-2">
-              Cancel
-            </v-btn>
-            <v-btn color="primary" @click="submitForm" :disabled="!formValid || loading">
-              Add Todo
-            </v-btn>
+            <v-row class="d-flex justify-end">
+              <v-btn color="secondary" variant="outlined" @click="handleCancel" class="mr-2">
+                Cancel
+              </v-btn>
+              <v-btn color="primary" @click="submitForm" :disabled="!formValid || loading">
+                Add Todo
+              </v-btn>
+            </v-row>
           </div>
         </v-form>
       </v-card-text>

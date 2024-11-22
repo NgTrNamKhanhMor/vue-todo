@@ -28,8 +28,10 @@
             {{ errorMessage }}
           </v-alert>
           <div class="actions">
-            <v-btn color="secondary" @click="handleCancel"  :disabled="loading" class="mr-2">Cancel</v-btn>
-            <v-btn color="primary" type="submit"  :disabled="loading" class="mr-2">Edit Todo</v-btn>
+            <v-row class="d-flex justify-end ">
+              <v-btn color="secondary" @click="handleCancel"  :disabled="loading" class="mr-2">Cancel</v-btn>
+              <v-btn color="primary" type="submit"  :disabled="loading" class="mr-2">Edit Todo</v-btn>
+            </v-row>
           </div>
         </v-form>
       </v-card-text>
