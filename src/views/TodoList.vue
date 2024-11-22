@@ -276,7 +276,8 @@ watch(
   { immediate: true },
 )
 
-watch([currentPage, searchTerm, selectedDate, completed], () => {
+watch([ searchTerm, selectedDate, completed], () => {
+  currentPage.value = 1;
   updateFilter()
 })
 watch([currentPage, totalPages], () => {
