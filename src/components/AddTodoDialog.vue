@@ -1,70 +1,58 @@
 <template>
-  <v-dialog :model-value="show" max-width="500" @update:model-value="handleCancel" persistent>
+  <v-dialog :model-value="show" max-width="500" persistent>
     <v-card class="dialog-card">
       <v-card-title>
         <span class="headline">Add Todo</span>
       </v-card-title>
       <v-card-text>
-        <Vueform
-          :endpoint="false"
-          @submit="handleAddTodo"
-          validate-on=""
-          ref="form$"
-          :display-errors="false"
-        >
-          <TextElement name="name" label="Name" placeholder="Name" :rules="['required']" />
+        <v-form ref="form" v-model="formValid" @submit.prevent="submitForm">
+          <!-- Name Field -->
+          <v-text-field
+            v-model="name"
+            label="Name"
+            placeholder="Enter name"
+            :rules="nameRules"
+            outlined
+            required
+          ></v-text-field>
 
-          <!-- Date Picker Component -->
-          <DateElement
-            name="date"
-            placeholder="Date"
-            field-name="Date"
-            :rules="['required']"
-            display-format="MMMM Do, YYYY"
-          />
+          <!-- Date Picker -->
+          <v-date-picker
+            v-model="date"
+            label="Date"
+            placeholder="Select date"
+            outlined
+            required
+            width="450"
+            :rules="dateRules"
+            @change="validateDate"
+          ></v-date-picker>
 
           <!-- Error Message Display -->
           <v-alert v-if="errorMessage" type="error" dismissible>
             {{ errorMessage }}
           </v-alert>
 
-          <GroupElement name="actions">
-            <ButtonElement
-              align="right"
-              secondary
-              :resets="true"
-              name="close"
-              @click="handleCancel"
-              :disabled="loading"
-              :columns="{
-                default: 12,
-                sm: 8,
-              }"
-              >Cancel</ButtonElement
-            >
-            <ButtonElement
-              align="right"
-              name="submit"
-              full
-              :submits="true"
-              button-label="Add Todo"
-              size="lg"
-              :columns="{
-                default: 12,
-                sm: 4,
-              }"
-              :loading="loading"
-              :disabled="loading"
-            />
-          </GroupElement>
-        </Vueform>
+          <!-- Action Buttons -->
+          <div class="actions">
+            <v-row class="d-flex justify-end">
+              <v-btn color="secondary" variant="outlined" @click="handleCancel" class="mr-2">
+                Cancel
+              </v-btn>
+              <v-btn color="primary" @click="submitForm" :disabled="!formValid || loading">
+                Add Todo
+              </v-btn>
+            </v-row>
+          </div>
+        </v-form>
       </v-card-text>
     </v-card>
   </v-dialog>
 </template>
+
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { addTodo } from '@/queries/todo'
+import { ref } from 'vue'
 
 const props = defineProps({
   show: {
@@ -76,21 +64,45 @@ const props = defineProps({
     required: true,
   },
 })
-const form$ = ref(null)
-const loading = ref(false)
-const errorMessage = ref<string | null>(null)
 
 const emit = defineEmits(['update:show'])
 
-const handleAddTodo = async () => {
-  if (!form$.value) {
-    return
-  }
-  const data = form$.value.data
+// Form state
+
+const form = ref(null)
+const formValid = ref(false)
+const name = ref('')
+const date = ref<Date | null>(new Date())
+const loading = ref(false)
+const errorMessage = ref<string | null>(null)
+
+// Validation rules
+const nameRules = [
+  (v: string) => !!v || 'Name is required',
+  (v: string) => (v && v.length >= 3) || 'Name must be at least 3 characters long',
+]
+
+const dateRules = [(v: Date | null) => !!v || 'Date is required']
+
+const handleCancel = () => {
+  emit('update:show', false)
+}
+
+const validateDate = () => {
+  const isDateValid = date.value !== null && date.value !== null
+  formValid.value = isDateValid && name.value.length >= 3
+}
+
+const submitForm = async () => {
+  if (!formValid.value) return
+  loading.value = true
+  errorMessage.value = null
+
   try {
-    loading.value = true
-    errorMessage.value = null
-    await addTodo(data)
+    await addTodo({
+      name: name.value,
+      date: String(date.value),
+    })
     props.refetch()
     handleCancel()
   } catch (error) {
@@ -99,20 +111,4 @@ const handleAddTodo = async () => {
     loading.value = false
   }
 }
-function handleCancel() {
-  emit('update:show', false)
-}
-
-watch(
-  () => props.show,
-  (newVal) => {
-    emit('update:show', newVal)
-  },
-)
 </script>
-
-<style scoped>
-.dialog-card {
-  overflow: visible !important;
-}
-</style>

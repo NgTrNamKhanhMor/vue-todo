@@ -1,34 +1,68 @@
 <template>
-  <v-container :fluid="true">
-    <!-- Search and Date Picker -->
-    <v-row dense align="center">
-      <v-col cols="3">
-        <v-text-field v-model="searchTerm" label="Search Todos" />
+  <v-container :fluid="true" class="pa-10 w-lg-75">
+    <!-- Filter Badges -->
+    <v-row dense align="center" class="mb-2">
+      <v-col cols="auto" v-if="searchTerm">
+        <v-chip color="primary" outlined  prepend-icon="mdi-star">
+          Name: {{ searchTerm }}
+          <v-icon small @click="clearNameFilter">mdi-close</v-icon>
+        </v-chip>
       </v-col>
-      <v-col cols="3">
-        <VueDatePicker v-model="selectedDate" :enable-time-picker="false" position="left"/>
+      <v-col cols="auto" v-if="selectedDate">
+        <v-chip color="red" outlined prepend-icon="mdi-calendar-range">
+          Date: {{ selectedDate }}
+          <v-icon small @click="clearDateFilter">mdi-close</v-icon>
+        </v-chip>
       </v-col>
     </v-row>
-    <v-btn color="primary" @click="openAddDialog">Add Todo</v-btn>
+
+    <!-- Search, Date Picker, and Add Todo Button -->
+    <v-row dense align="center" class="my-3">
+      <v-btn color="primary" class="my-4 mr-3" @click="openAddDialog" prepend-icon="mdi-plus">
+        Add Todo
+      </v-btn>
+      <v-btn color="secondary" class="my-4" @click="openFilterDialog" prepend-icon="mdi-filter">
+        Filter
+      </v-btn>
+    </v-row>
+
+    <!-- Filter Tabs -->
+    <v-tabs class="my-4">
+      <v-tab @click="completed = null">All</v-tab>
+      <v-divider vertical class="mx-2"></v-divider>
+      <v-tab @click="completed = true"> Done </v-tab>
+      <v-tab @click="completed = false"> Not Done </v-tab>
+    </v-tabs>
+
+    <!-- Divider -->
 
     <!-- Loading and Error Handling -->
-    <v-container fluid v-if="isLoading" >
-      <v-skeleton-loader
-        type="table-heading"
-        :loading="isLoading"
-        v-for="i in DEFAULT_PER_PAGE"
-        :key="i"
-      />
-    </v-container>
+    <v-box fluid v-if="isLoading">
+      <v-list>
+        <v-list-item class="todo-item px-0" v-for="i in DEFAULT_PER_PAGE" :key="i">
+          <v-row class="w-100 align-center">
+            <!-- Main content skeleton loader taking up the remaining space -->
+            <v-col class="flex-grow-1">
+              <v-skeleton-loader type="list-item-avatar-two-line" :loading="isLoading" />
+            </v-col>
+
+            <!-- Avatar skeleton loader aligned to the end -->
+            <v-col class="d-flex justify-end pr-0" cols="auto">
+              <v-skeleton-loader type="avatar" :loading="isLoading" />
+            </v-col>
+          </v-row>
+        </v-list-item>
+      </v-list>
+    </v-box>
+
     <v-alert v-if="isError" type="error" dismissible>
       An error occurred while fetching todos.
     </v-alert>
 
-    <!-- Todo List: Show only if not loading -->
+    <!-- Todo List -->
     <v-list v-else-if="!isLoading && filteredTodos.length > 0">
       <v-list-item v-for="todo in filteredTodos" :key="todo.id" class="todo-item">
         <v-row align="center">
-          <!-- Checkbox on the left -->
           <v-col cols="auto">
             <v-checkbox
               @click="toggleComplete(todo)"
@@ -37,8 +71,6 @@
               hide-details
             ></v-checkbox>
           </v-col>
-
-          <!-- Title and Subtitle in another column -->
           <v-col class="cursor-pointer" @click="() => openEditDialog(todo)">
             <v-list-item-title>
               {{ todo.name }}
@@ -54,10 +86,14 @@
               }}
             </v-list-item-subtitle>
           </v-col>
-
-          <!-- Delete Icon -->
           <v-col cols="auto">
-            <v-icon icon="mdi-delete" color="red" @click="confirmDelete(todo.id)"></v-icon>
+            <v-btn
+              size="small"
+              variant="outlined"
+              icon="mdi-close"
+              color="red"
+              @click="confirmDelete(todo.id)"
+            ></v-btn>
           </v-col>
         </v-row>
       </v-list-item>
@@ -97,20 +133,21 @@
       :refetch="refetch"
       :todoToDelete="todoToDelete"
     />
+    <FilterDialog v-if="filterDialog" :show="filterDialog" @update:show="filterDialog = $event" />
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import AddTodoDialog from '@/components/AddTodoDialog.vue'
 import DeleteDialog from '@/components/DeleteDialog.vue'
 import EditTodoDialog from '@/components/EditTodoForm.vue'
+import FilterDialog from '@/components/FilterDialog.vue'
+import { DEFAULT_CURRENT_PAGE, DEFAULT_PER_PAGE } from '@/const'
 import { getTodo, updateTodo, type FilteredTodosResponse, type Todo } from '@/queries/todo'
 import { useAuthStore } from '@/stores/auth'
-import VueDatePicker from '@vuepic/vue-datepicker'
-import { DEFAULT_CURRENT_PAGE, DEFAULT_PER_PAGE } from '@/const'
 import '@vuepic/vue-datepicker/dist/main.css'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -124,20 +161,25 @@ const currentPage = ref(DEFAULT_CURRENT_PAGE)
 const itemsPerPage = DEFAULT_PER_PAGE
 const searchTerm = ref('')
 const selectedDate = ref<string | null>(null)
+const completed = ref<boolean | null>(null)
 const data = ref<FilteredTodosResponse | null>(null)
 const isLoading = ref(false)
 const isError = ref(false)
+const filterDialog = ref(false)
 
 const queryParams = computed(() => ({
   userId: Number(authStore.user?.id),
   search: searchTerm.value,
   date: selectedDate.value || '',
+  completed: completed.value === null ? null : completed.value,
   page: currentPage.value,
   itemsPerPage,
 }))
 const totalPages = computed(() => data.value?.totalPages || 1)
 const filteredTodos = computed(() => data.value?.todos || [])
+const progress = computed(() => data.value?.progress || 0)
 
+const emit = defineEmits(['updateProgress'])
 
 const refetch = async () => {
   isLoading.value = true
@@ -151,9 +193,14 @@ const refetch = async () => {
   }
 }
 
+const openFilterDialog = () => {
+  filterDialog.value = true
+}
+
 const toggleComplete = async (todo: Todo) => {
   try {
     await updateTodo(todo.id, { completed: !todo.completed })
+    refetch()
   } catch (error) {
     isError.value = true
   }
@@ -165,6 +212,7 @@ const updateUrlParams = () => {
       ...route.query,
       search: searchTerm.value,
       date: selectedDate.value,
+      completed: String(completed.value),
       page: currentPage.value.toString(),
     },
   })
@@ -184,6 +232,26 @@ const confirmDelete = (todoId: number) => {
   confirmDeleteDialog.value = true
 }
 
+const updateFilter = () => {
+  updateUrlParams()
+  refetch()
+}
+
+const clearNameFilter = () => {
+  searchTerm.value = ''
+  updateFilter()
+}
+
+const clearDateFilter = () => {
+  selectedDate.value = null
+  updateFilter()
+}
+
+
+watch(progress, (newProgress) => {
+  emit('updateProgress', newProgress)
+})
+
 watch(
   queryParams,
   () => {
@@ -197,30 +265,35 @@ watch(
   () => {
     searchTerm.value = (route.query.search as string) || ''
     selectedDate.value = (route.query.date as string) || ''
+    if (route.query.completed === undefined || route.query.completed === null) {
+      completed.value = null
+    } else {
+      completed.value =
+        route.query.completed === 'true' ? true : route.query.completed === 'false' ? false : null
+    }
     currentPage.value = parseInt((route.query.page as string) || '1', 10)
   },
   { immediate: true },
 )
 
-watch([currentPage, searchTerm, selectedDate], () => {
-  updateUrlParams()
-  refetch()
+watch([ searchTerm, selectedDate, completed], () => {
+  currentPage.value = 1;
+  updateFilter()
 })
 watch([currentPage, totalPages], () => {
   if (currentPage.value > totalPages.value) {
     currentPage.value = totalPages.value
   }
-  updateUrlParams()
-  refetch()
+  updateFilter()
 })
-
 </script>
 
 <style scoped>
-  .todo-item {
-    border: 1px solid #ccc;
-    border-radius: 20px !important;     
-    margin-bottom: 8px;     
-    padding: 8px;            
-  }
+.todo-item {
+  border: 1px solid #ccc;
+  border-radius: 20px !important;
+  margin-bottom: 8px;
+  padding: 8px;
+  min-height: 85px;
+}
 </style>

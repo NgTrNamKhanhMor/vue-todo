@@ -13,11 +13,13 @@ interface FilterParams {
   userId: number
   page: number
   search: string
+  completed: boolean | null
   date: string
   itemsPerPage: number
 }
 
 export interface FilteredTodosResponse {
+  progress: number,
   todos: Todo[]
   totalPages: number
 }
@@ -25,16 +27,21 @@ export interface FilteredTodosResponse {
 // Filter function (helper)
 export function filterTodos(
   todos: Todo[],
-  { userId, search, date, itemsPerPage, page }: FilterParams,
+  { userId, search, date, completed, itemsPerPage, page }: FilterParams,
 ): FilteredTodosResponse {
   let filteredTodos = todos.filter((todo) => todo.userId === userId)
 
+  const totalTodos = filteredTodos.length
+  const completedTodos = filteredTodos.filter((todo) => todo.completed).length
+  const progress = totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0
   // Search filter
   if (search) {
     const searchLower = search.toLowerCase()
     filteredTodos = filteredTodos.filter((todo) => todo.name.toLowerCase().includes(searchLower))
   }
-
+  if (completed !== null) {
+    filteredTodos = filteredTodos.filter((todo) => todo.completed === completed)
+  }
   // Date filter
   if (date) {
     const selectedDate = new Date(date)
@@ -54,6 +61,7 @@ export function filterTodos(
   const paginatedTodos = filteredTodos.slice(start, start + itemsPerPage)
 
   return {
+    progress,
     todos: paginatedTodos,
     totalPages: Math.ceil(totalItems / itemsPerPage),
   }
@@ -65,7 +73,7 @@ export async function getTodo(queryParams: FilterParams): Promise<FilteredTodosR
 }
 
 // Add Todo
-export async function addTodo(newTodo: Todo): Promise<Todo> {
+export async function addTodo(newTodo: Omit<Todo, 'id' | 'userId' | 'completed'>): Promise<Todo> {
   const authStore = useAuthStore()
   const response = await axios.post<Todo>(`https://66d963034ad2f6b8ed546b61.mockapi.io/api/todo`, {
     ...newTodo,

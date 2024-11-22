@@ -1,73 +1,47 @@
 <template>
-  <v-dialog :model-value="show" max-width="500" @update:model-value="handleCancel">
+  <v-dialog :model-value="show" max-width="500" @update:model-value="handleCancel" persistent>
     <v-card>
       <v-card-title>
         <span class="headline">Edit Todo</span>
       </v-card-title>
       <v-card-text>
-        <Vueform
-          :endpoint="false"
-          @submit="handleEditTodo"
-          validate-on=""
-          ref="form$"
-          :display-errors="false"
-        >
-          <TextElement
-            name="name"
+        <v-form ref="form$" v-model="formValid" @submit.prevent="handleEditTodo">
+          <v-text-field
+            v-model="formData.name"
             label="Name"
             placeholder="Name"
-            :rules="['required']"
-            :default="initialValue.name"
+            :rules="nameRules"
           />
 
-          <DateElement
-            name="date"
+          <v-date-picker
+            v-model="formData.date"
+            label="Date"
             placeholder="Date"
-            field-name="Date"
-            :default="initialValue.date"
             :rules="['required']"
+            format="yyyy-MM-dd"
             display-format="MMMM Do, YYYY"
+            required
           />
+
           <!-- Error Message Display -->
           <v-alert v-if="errorMessage" type="error" dismissible>
             {{ errorMessage }}
           </v-alert>
-          <GroupElement name="actions">
-            <ButtonElement
-              align="right"
-              secondary
-              :resets="true"
-              name="close"
-              :disabled="loading"
-              @click="handleCancel"
-              :columns="{
-                default: 12,
-                sm: 9,
-              }"
-            >Cancel</ButtonElement>
-            <ButtonElement
-              align="right"
-              name="submit"
-              full
-              :submits="true"
-              button-label="Edit Todo"
-              size="lg"
-              :columns="{
-                default: 12,
-                sm: 3,
-              }"
-              :loading="loading"
-              :disabled="loading"
-            />
-          </GroupElement>
-        </Vueform>
+          <div class="actions">
+            <v-row class="d-flex justify-end ">
+              <v-btn color="secondary" @click="handleCancel"  :disabled="loading" class="mr-2">Cancel</v-btn>
+              <v-btn color="primary" type="submit"  :disabled="loading" class="mr-2">Edit Todo</v-btn>
+            </v-row>
+          </div>
+        </v-form>
       </v-card-text>
     </v-card>
   </v-dialog>
 </template>
+
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { updateTodo } from '@/queries/todo'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   refetch: {
@@ -83,33 +57,34 @@ const props = defineProps({
     required: true,
   },
 })
+const emit = defineEmits(['update:show'])
 const form$ = ref(null)
-const loading = ref(false) 
-const errorMessage = ref<string | null>(null) 
+const loading = ref(false)
+const errorMessage = ref<string | null>(null)
+const formValid = ref(false)
 
-
-const initialValue = ref({
+const formData = ref({
   name: props.selectedTodo.name || '',
-  date: props.selectedTodo.date
-    ? new Date(props.selectedTodo.date).toISOString().split('T')[0]
-    : '',
+  date: props.selectedTodo.date ? new Date(props.selectedTodo.date) : null, 
 })
 
-const emit = defineEmits(['update:show'])
 
-
+const nameRules = [
+  (v: string) => !!v || 'Name is required',
+  (v: string) => (v && v.length >= 3) || 'Name must be at least 3 characters long',
+]
 
 const handleEditTodo = async () => {
-  const data = form$.value.data
+  if (!formValid.value) return 
+  const data = formData.value
   try {
     loading.value = true
-    errorMessage.value = null 
-    
+    errorMessage.value = null
+
     await updateTodo(props.selectedTodo.id, data)
-    
+
     props.refetch()
     handleCancel()
-
   } catch (error) {
     errorMessage.value = 'There was an error editing the todo. Please try again.'
   } finally {
@@ -124,9 +99,9 @@ function handleCancel() {
 watch(
   () => props.selectedTodo,
   (newTodo) => {
-    initialValue.value = {
+    formData.value = {
       name: newTodo.name || '',
-      date: newTodo.date ? new Date(newTodo.date).toISOString().split('T')[0] : '',
+      date: newTodo.date ? new Date(newTodo.date) : null, 
     }
   },
   { immediate: true },
@@ -138,9 +113,6 @@ watch(
     emit('update:show', newVal)
   },
 )
-
-
 </script>
-
 
 <style scoped></style>
